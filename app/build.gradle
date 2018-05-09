@@ -39,6 +39,72 @@ android {
 
         }
     }
+
+    flavorDimensions "buildAudience"
+    productFlavors {
+        dev {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "true"
+            buildConfigField 'boolean', 'testTools', "false"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "false"
+        }
+
+        qa {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "false"
+            buildConfigField 'boolean', 'testTools', "true"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "false"
+        }
+
+        autoTest {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "true"
+            buildConfigField 'boolean', 'testTools', "true"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "false"
+        }
+
+        internalLaunch {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "false"
+            buildConfigField 'boolean', 'testTools', "false"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "true"
+        }
+
+        userLaunch {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "false"
+            buildConfigField 'boolean', 'testTools', "false"
+            buildConfigField 'boolean', 'logging', "false"
+            buildConfigField 'boolean', 'debugSettings', "false"
+            buildConfigField 'boolean', 'gitInfo', "false"
+            buildConfigField 'boolean', 'crashlytics', "true"
+        }
+    }
+
+    // Filter out the variants which we don't need
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        def buildType = variant.buildType.name
+
+        def isAudienceInternal = names.contains("dev") || names.contains("qa") || names.contains("autoTest")
+        def isDebugBuild = buildType.contains("debug")
+
+        def shouldWeIgnoreThis = isAudienceInternal != isDebugBuild
+
+        setIgnore(shouldWeIgnoreThis)
+    }
 }
 
 dependencies {
