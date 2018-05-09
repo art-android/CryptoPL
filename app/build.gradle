@@ -2,8 +2,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
+apply from: "$project.rootDir/tools/script-lint.gradle"
+apply from: "$project.rootDir/tools/script-git-version.gradle"
+
 android {
     compileSdkVersion versions.app.compileSdk
+
     defaultConfig {
         applicationId "com.androidonrocks.cryptopl"
         minSdkVersion versions.app.minSdk
@@ -12,10 +16,27 @@ android {
         versionName versionName
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
+        debug {
+            versionNameSuffix ".debug"
+            buildConfigField 'String', 'GIT_SHA', "\"${gitSha}\""
+            buildConfigField 'long', 'GIT_TIMESTAMP', "${gitTimestamp}"
+            buildConfigField 'long', 'GIT_CHANGED_FILES', "${gitChangedFilesNumber}"
+
+            debuggable true
+        }
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            minifyEnabled true
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), '../tools/rules-proguard.pro'
+
+            // Disable these values for prod builds. We have switches in productFlavors for this, but still making the values unavailable seems wise for the person who is decompiling APKs
+            buildConfigField 'String', 'GIT_SHA', "\" \""
+            buildConfigField 'long', 'GIT_TIMESTAMP', "0"
+            buildConfigField 'long', 'GIT_CHANGED_FILES', "0"
+
         }
     }
 }

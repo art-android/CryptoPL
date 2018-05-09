@@ -1,0 +1,54 @@
+def gitSha() {
+    try {
+        def p = 'git rev-parse --short HEAD'.execute([], project.rootDir)
+        p.waitFor()
+        if (p.exitValue() != 0) {
+            return null;
+        }
+
+        return p.text.trim()
+    } catch (Exception e) {
+        return null;
+    }
+}
+
+def gitTimestamp() {
+    try {
+        def p = 'git log -n 1 --format=%at'.execute([], rootDir)
+        p.waitFor()
+        if (p.exitValue() != 0) {
+            return 0;
+        }
+
+        return p.text.trim()
+    } catch (Exception e) {
+        return 0;
+    }
+}
+
+def gitChangedFilesNumber() {
+    try {
+        def p = 'git diff --name-only'.execute([], rootDir)
+        p.waitFor()
+        if (p.exitValue() != 0) {
+            return 0;
+        }
+
+        return p.text.count('\n');
+    } catch (Exception e) {
+        return 0;
+    }
+}
+
+
+ext {
+    gitSha = gitSha()
+    gitTimestamp = gitTimestamp()
+    gitChangedFilesNumber = gitChangedFilesNumber()
+}
+
+task printGitInfo() {
+    println("SHA: $gitSha")
+    println("Timestamp: $gitTimestamp")
+    println("Changed Files after last commit: $gitChangedFilesNumber")
+}

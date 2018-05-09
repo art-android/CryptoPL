@@ -9,7 +9,7 @@ buildscript {
                                                'minSdk'     : 21,
                                                'targetSdk'  : 27,
                                                'versionCode': 1,
-                                               'versionName': '0.0.1'],
+                                               'versionName': '0.0.1',],
                     'support'               : ['appCompat'       : '27.1.1',
                                                'constraintLayout': '1.0.2',
                                                'cardView'        : '21.0.+',
@@ -41,6 +41,22 @@ buildscript {
     dependencies {
         classpath deps.gradleClassPath
         classpath deps.kotlinClassPath
+    }
+}
+
+plugins {
+    id "io.gitlab.arturbosch.detekt" version "1.0.0.RC7"
+}
+
+detekt {
+    version = "1.0.0.RC7"
+    profile("main") {
+        input = "$projectDir"
+        config = "$project.rootDir/tools/detekt-ruleset.yml"
+        filters = ".*test.*,.*/resources/.*,.*/tmp/.*"
+        output = "${project.buildDir}/reports/detekt.xml"
+        parallel = true
+        disableDefaultRuleSets = false
     }
 }
 
