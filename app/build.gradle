@@ -5,6 +5,11 @@ apply plugin: 'kotlin-android-extensions'
 apply from: "$project.rootDir/tools/script-lint.gradle"
 apply from: "$project.rootDir/tools/script-git-version.gradle"
 
+// Load keystore
+def keystorePropertiesFile = rootProject.file("keystore.properties");
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 android {
     compileSdkVersion versions.app.compileSdk
 
@@ -17,17 +22,33 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        debug {
+            storeFile file("$project.rootDir/" + keystoreProperties['debugStoreFile'])
+            storePassword keystoreProperties['debugStorePassword']
+            keyAlias  keystoreProperties['debugKeyAlias']
+            keyPassword keystoreProperties['debugKeyPassword']
+        }
+        release {
+            storeFile file("$project.rootDir/" + keystoreProperties['releaseStoreFile'])
+            storePassword keystoreProperties['releaseStorePassword']
+            keyAlias keystoreProperties['releaseKeyAlias']
+            keyPassword keystoreProperties['releaseKeyPassword']
+        }
+    }
+
     buildTypes {
         debug {
+            debuggable true
+
             versionNameSuffix ".debug"
             buildConfigField 'String', 'GIT_SHA', "\"${gitSha}\""
             buildConfigField 'long', 'GIT_TIMESTAMP', "${gitTimestamp}"
             buildConfigField 'long', 'GIT_CHANGED_FILES', "${gitChangedFilesNumber}"
 
-            debuggable true
+            signingConfig signingConfigs.debug
         }
         release {
-
             minifyEnabled true
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), '../tools/rules-proguard.pro'
@@ -37,6 +58,7 @@ android {
             buildConfigField 'long', 'GIT_TIMESTAMP', "0"
             buildConfigField 'long', 'GIT_CHANGED_FILES', "0"
 
+            signingConfig signingConfigs.release
         }
     }
 
