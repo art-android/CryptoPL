@@ -79,3 +79,5 @@ obj/
 out/
 profiles_settings.xml
 proguard/
+keystore.properties
+keystores/
