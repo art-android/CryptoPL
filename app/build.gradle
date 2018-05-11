@@ -1,0 +1,140 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+apply from: "$project.rootDir/tools/script-lint.gradle"
+apply from: "$project.rootDir/tools/script-git-version.gradle"
+
+// Load keystore
+def keystorePropertiesFile = rootProject.file("keystore.properties");
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+android {
+    compileSdkVersion versions.app.compileSdk
+
+    defaultConfig {
+        applicationId "com.androidonrocks.cryptopl"
+        minSdkVersion versions.app.minSdk
+        targetSdkVersion versions.app.targetSdk
+        versionCode versionCode
+        versionName versionName
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("$project.rootDir/" + keystoreProperties['debugStoreFile'])
+            storePassword keystoreProperties['debugStorePassword']
+            keyAlias  keystoreProperties['debugKeyAlias']
+            keyPassword keystoreProperties['debugKeyPassword']
+        }
+        release {
+            storeFile file("$project.rootDir/" + keystoreProperties['releaseStoreFile'])
+            storePassword keystoreProperties['releaseStorePassword']
+            keyAlias keystoreProperties['releaseKeyAlias']
+            keyPassword keystoreProperties['releaseKeyPassword']
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+
+            versionNameSuffix ".debug"
+            buildConfigField 'String', 'GIT_SHA', "\"${gitSha}\""
+            buildConfigField 'long', 'GIT_TIMESTAMP', "${gitTimestamp}"
+            buildConfigField 'long', 'GIT_CHANGED_FILES', "${gitChangedFilesNumber}"
+
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), '../tools/rules-proguard.pro'
+
+            // Disable these values for prod builds. We have switches in productFlavors for this, but still making the values unavailable seems wise for the person who is decompiling APKs
+            buildConfigField 'String', 'GIT_SHA', "\" \""
+            buildConfigField 'long', 'GIT_TIMESTAMP', "0"
+            buildConfigField 'long', 'GIT_CHANGED_FILES', "0"
+
+            signingConfig signingConfigs.release
+        }
+    }
+
+    flavorDimensions "buildAudience"
+    productFlavors {
+        dev {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "true"
+            buildConfigField 'boolean', 'testTools', "false"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "false"
+        }
+
+        qa {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "false"
+            buildConfigField 'boolean', 'testTools', "true"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "false"
+        }
+
+        autoTest {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "true"
+            buildConfigField 'boolean', 'testTools', "true"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "false"
+        }
+
+        internalLaunch {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "false"
+            buildConfigField 'boolean', 'testTools', "false"
+            buildConfigField 'boolean', 'logging', "true"
+            buildConfigField 'boolean', 'debugSettings', "true"
+            buildConfigField 'boolean', 'gitInfo', "true"
+            buildConfigField 'boolean', 'crashlytics', "true"
+        }
+
+        userLaunch {
+            // Build features
+            buildConfigField 'boolean', 'devTools', "false"
+            buildConfigField 'boolean', 'testTools', "false"
+            buildConfigField 'boolean', 'logging', "false"
+            buildConfigField 'boolean', 'debugSettings', "false"
+            buildConfigField 'boolean', 'gitInfo', "false"
+            buildConfigField 'boolean', 'crashlytics', "true"
+        }
+    }
+
+    // Filter out the variants which we don't need
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        def buildType = variant.buildType.name
+
+        def isAudienceInternal = names.contains("dev") || names.contains("qa") || names.contains("autoTest")
+        def isDebugBuild = buildType.contains("debug")
+
+        def shouldWeIgnoreThis = isAudienceInternal != isDebugBuild
+
+        setIgnore(shouldWeIgnoreThis)
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation deps.kotlinStdLib
+    implementation deps.appCompat
+
+    testImplementation deps.junit
+    androidTestImplementation deps.testRunner
+    androidTestImplementation deps.espresso
+}

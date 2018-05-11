@@ -1,0 +1,72 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+
+    ext.versions = ['build'                 : ['kotlin': '1.2.30',
+                                               'gradle': '3.1.2',],
+                    'app'                   : ['compileSdk' : 27,
+                                               'buildTools' : '27.0.3',
+                                               'minSdk'     : 21,
+                                               'targetSdk'  : 27,
+                                               'versionCode': 1,
+                                               'versionName': '0.0.1',],
+                    'support'               : ['appCompat'       : '27.1.1',
+                                               'constraintLayout': '1.0.2',
+                                               'cardView'        : '21.0.+',
+                                               'recyclerView'    : '21.0.+',],
+                    'architectureComponents': ['archLibrary'        : '1.1.0',
+                                               'archiLibraryRuntime': '1.0.3',],
+                    'okhttp'                : ['core': '3.9.1',],
+                    'retrofit'              : ['core': '2.3.0',],
+                    'testing'               : ['junit'     : '4.12',
+                                               'testRunner': '1.0.2',
+                                               'espresso'  : '3.0.2',],
+                    'gson'                  : '2.8.2',]
+
+    ext.deps = ['gradleClassPath': "com.android.tools.build:gradle:$versions.build.gradle",
+                'kotlinClassPath': "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.build.kotlin",
+
+                'kotlinStdLib'   : "org.jetbrains.kotlin:kotlin-stdlib-jre7:$versions.build.kotlin",
+                'appCompat'      : "com.android.support:appcompat-v7:$versions.support.appCompat",
+
+                'junit'          : "junit:junit:$versions.testing.junit",
+                'testRunner'     : "com.android.support.test:runner:$versions.testing.testRunner",
+                'espresso'       : "com.android.support.test.espresso:espresso-core:$versions.testing.espresso",]
+
+    repositories {
+        google()
+        jcenter()
+    }
+
+    dependencies {
+        classpath deps.gradleClassPath
+        classpath deps.kotlinClassPath
+    }
+}
+
+plugins {
+    id "io.gitlab.arturbosch.detekt" version "1.0.0.RC7"
+}
+
+detekt {
+    version = "1.0.0.RC7"
+    profile("main") {
+        input = "$projectDir"
+        config = "$project.rootDir/tools/detekt-ruleset.yml"
+        filters = ".*test.*,.*/resources/.*,.*/tmp/.*"
+        output = "${project.buildDir}/reports/detekt.xml"
+        parallel = true
+        disableDefaultRuleSets = false
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
